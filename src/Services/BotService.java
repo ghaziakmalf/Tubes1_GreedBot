@@ -47,44 +47,44 @@ public class BotService {
         GameObject worldCenter;
 
         if (!playerGameObjects.contains(bot)) {
-            System.out.print("I am no longer in the game state, and have been consumed");
+            System.out.printl("I am no longer in the game state, and have been consumed");
         }
 
         if (target == null || target == worldCenter) {
-            System.out.print("No Current Target, resolving new target");
-            heading = ResolveNewTarget();
+            System.out.printl("No Current Target, resolving new target");
+            heading = resolveNewTarget();
         } else {
             GameObject defaultTarget = new GameObject(null, null, null, null, null, null);
             GameObject targetWithNewValues = gameState.getGameObjects()
                 .stream().filter(item -> item.getId() == target.id)
                 .findFirst().orElseGet(() -> defaultTarget);
             if (targetWithNewValues == defaultTarget) {
-                System.out.print("Old Target Invalid, resolving new target");
-                heading = ResolveNewTarget();
+                System.out.print;l("Old Target Invalid, resolving new target");
+                heading = resolveNewTarget();
             } else {
-                System.out.print("Previous Target exists, updating resolution");
+                System.out.printl("Previous Target exists, updating resolution");
                 target = targetWithNewValues;
                 if (target.size < bot.size) {
-                    heading = GetDirection(bot, target);
+                    heading = getHeadingBetween(target);
                 } else {
-                    System.out.print("Previous Target larger than me, resolving new target");
-                    heading = ResolveNewTarget();
+                    System.out.printl("Previous Target larger than me, resolving new target");
+                    heading = resolveNewTarget();
                 }
             }
         }
 
-        double distanceFromWorldCenter = GetDistanceBetween(worldCenter);
+        double distanceFromWorldCenter = getDistanceBetween(bot, worldCenter);
 
         if (distanceFromWorldCenter + (1.5 * bot.size) > gameState.world.getRadius()) {
             worldCenter = new GameObject(null, null, null, null, null, null);
-            heading = GetDirection(bot, worldCenter);
-            System.out.print("Near the edge, going to the center");
+            heading = getHeadingBetween(worldCenter);
+            System.out.printl("Near the edge, going to the center");
             target = worldCenter;
         }
 
         if ((targetIsPlayer || target == worldCenter) && bot.size > 20 && bot.torpedoSalvoCount > 0)
             {
-                System.out.print("Firing Torpedoes at target");
+                System.out.printl("Firing Torpedoes at target");
                 actionId = 5;
             }
 
@@ -94,44 +94,42 @@ public class BotService {
             lastAction = playerAction;
             timeSinceLastAction = 0;
 
-            playerAction = playerAction;
-
-            System.out.print("Player action:" + playerAction.action + ":" + playerAction.heading);
+            System.out.printl("Player action:" + playerAction.action + ":" + playerAction.heading);
     }  
 
-    private int resolveNewTarger() {
+    private int resolveNewTarget() {
         int heading;
         var nearestFood = gameState.getGameObjects()
                 .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Food)
                 .sorted(Comparator
                         .comparing(item -> getDistanceBetween(bot, item)))
-                .collect(Collectors.toList());
+                .findFirst().orElseGet(() -> defaultTarget);
         var nearestPlayer = gameState.getPlayerGameObjects()
                 .stream().filter(player -> player.getId() != bot.getId())
                 .sorted(Comparator
                         .comparing(player -> getDistanceBetween(bot, player)))
-                .collect(Coolectors.toList());
+                .findFirst().orElseGet(() -> defaultTarget);
         var nearestWormhole = gamestate.getGameObjects()
                 .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Wormhole)
                 .sorted(Comparator
                         .comparing(item -> getDistanceBetween(bot, item)))
-                .collect(Collectors2.toList());
+                .findFirst().orElseGet(() -> defaultTarget);
         
-        var directionToNearestPlayer = getHeadingBetween(nearestPlayer.get(0));
-        var directionToNearestFood = getHeadingBetween(nearestFood.get(0));
+        var directionToNearestPlayer = getHeadingBetween(nearestPlayer);
+        var directionToNearestFood = getHeadingBetween(nearestFood);
 
-        if ((nearestPlayer.get(0)).getSize() > bot.getSize()) {
-            heading = getAttackerResolution(nearestPlayer.get(0), nearestFood.get(0));
+        if (nearestPlayer.getSize() > bot.getSize()) {
+            heading = getAttackerResolution(nearestPlayer, nearestFood);
             targetIsPlayer = false;
         }
-        else if ((nearestPlayer.get(0)).getSize() < bot.getSize()) {
-            heading = getHeadingBetween(nearestPlayer.get(0));
-            target = nearestPlayer.get(0);
+        else if (nearestPlayer.getSize() < bot.getSize()) {
+            heading = getHeadingBetween(nearestPlayer);
+            target = nearestPlayer;
             targetIsPlayer = true;
         }
         else if (nearestFood != null) {
-            heading = getHeadingBetween(nearestFood.get(0));
-            target = nearestFood.get(0);
+            heading = getHeadingBetween(nearestFood);
+            target = nearestFood;
             targetIsPlayer = false;
         }
         else {
@@ -142,7 +140,7 @@ public class BotService {
         }
 
         if (target == worldCenter) {
-            heading = getHeadingBetween(nearestPlayer.get(0));
+            heading = getHeadingBetween(nearestPlayer);
         }
 
         return heading;
