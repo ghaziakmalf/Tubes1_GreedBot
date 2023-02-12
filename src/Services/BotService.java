@@ -38,10 +38,65 @@ public class BotService {
     }
 
     public void computeNextPlayerAction(PlayerAction playerAction) {
-        playerAction.action = PlayerActions.Forward;
-        playerAction.heading = new Random().nextInt(360);
+        var actionId = 1;
+        var heading = 90;
 
-        this.playerAction = playerAction;
+        List<GameObject> playerGameObjects;
+        playerGameObjects = gameState.getPlayerGameObjects();
+        GameObject target;
+        GameObject worldCenter;
+
+        if (!playerGameObjects.contains(bot)) {
+            System.out.print("I am no longer in the game state, and have been consumed");
+        }
+
+        if (target == null || target == worldCenter) {
+            System.out.print("No Current Target, resolving new target");
+            heading = ResolveNewTarget();
+        } else {
+            GameObject defaultTarget = new GameObject(null, null, null, null, null, null);
+            GameObject targetWithNewValues = gameState.getGameObjects()
+                .stream().filter(item -> item.getId() == target.id)
+                .findFirst().orElseGet(() -> defaultTarget);
+            if (targetWithNewValues == defaultTarget) {
+                System.out.print("Old Target Invalid, resolving new target");
+                heading = ResolveNewTarget();
+            } else {
+                System.out.print("Previous Target exists, updating resolution");
+                target = targetWithNewValues;
+                if (target.size < bot.size) {
+                    heading = GetDirection(bot, target);
+                } else {
+                    System.out.print("Previous Target larger than me, resolving new target");
+                    heading = ResolveNewTarget();
+                }
+            }
+        }
+
+        double distanceFromWorldCenter = GetDistanceBetween(worldCenter);
+
+        if (distanceFromWorldCenter + (1.5 * bot.size) > gameState.world.getRadius()) {
+            worldCenter = new GameObject(null, null, null, null, null, null);
+            heading = GetDirection(bot, worldCenter);
+            System.out.print("Near the edge, going to the center");
+            target = worldCenter;
+        }
+
+        if ((targetIsPlayer || target == worldCenter) && bot.size > 20 && bot.torpedoSalvoCount > 0)
+            {
+                System.out.print("Firing Torpedoes at target");
+                actionId = 5;
+            }
+
+            playerAction.action = actionId;
+            playerAction.heading = heading;
+
+            lastAction = playerAction;
+            timeSinceLastAction = 0;
+
+            playerAction = playerAction;
+
+            System.out.print("Player action:" + playerAction.action + ":" + playerAction.heading);
     }  
 
     private int resolveNewTarger() {
