@@ -8,8 +8,13 @@ import java.util.stream.*;
 
 public class BotService {
     private GameObject bot;
-    private PlayerAction playerAction;
     private GameState gameState;
+    private GameObject target;
+    private GameObject worldCenter;
+    private PlayerAction playerAction;
+    private PlayerAction lastAction;
+    private int timeSinceLastAction;
+    private bool targetIsPlayer = false;
 
     public BotService() {
         this.playerAction = new PlayerAction();
@@ -33,20 +38,75 @@ public class BotService {
     }
 
     public void computeNextPlayerAction(PlayerAction playerAction) {
-        playerAction.action = PlayerActions.FORWARD;
+        playerAction.action = PlayerActions.Forward;
         playerAction.heading = new Random().nextInt(360);
 
-        if (!gameState.getGameObjects().isEmpty()) {
-            var foodList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
+        this.playerAction = playerAction;
+    }  
 
-            playerAction.heading = getHeadingBetween(foodList.get(0));
+    private int resolveNewTarger() {
+        int heading;
+        var nearestFood = gameState.getGameObjects()
+                .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Food)
+                .sorted(Comparator
+                        .comparing(item -> getDistanceBetween(bot, item)))
+                .collect(Collectors.toList());
+        var nearestPlayer = gameState.getPlayerGameObjects()
+                .stream().filter(player -> player.getId() != bot.getId())
+                .sorted(Comparator
+                        .comparing(player -> getDistanceBetween(bot, player)))
+                .collect(Coolectors.toList());
+        var nearestWormhole = gamestate.getGameObjects()
+                .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Wormhole)
+                .sorted(Comparator
+                        .comparing(item -> getDistanceBetween(bot, item)))
+                .collect(Collectors2.toList());
+        
+        var directionToNearestPlayer = getHeadingBetween(nearestPlayer.get(0));
+        var directionToNearestFood = getHeadingBetween(nearestFood.get(0));
+
+        if ((nearestPlayer.get(0)).getSize() > bot.getSize()) {
+            heading = getAttackerResolution(nearestPlayer.get(0), nearestFood.get(0));
+            targetIsPlayer = false;
+        }
+        else if ((nearestPlayer.get(0)).getSize() < bot.getSize()) {
+            heading = getHeadingBetween(nearestPlayer.get(0));
+            target = nearestPlayer.get(0);
+            targetIsPlayer = true;
+        }
+        else if (nearestFood != null) {
+            heading = getHeadingBetween(nearestFood.get(0));
+            target = nearestFood.get(0);
+            targetIsPlayer = false;
+        }
+        else {
+            target = worldCenter;
+            heading = getHeadingBetween(worldCenter);
+            targetIsPlayer = false;
+
         }
 
-        this.playerAction = playerAction;
+        if (target == worldCenter) {
+            heading = getHeadingBetween(nearestPlayer.get(0));
+        }
+
+        return heading;
+    }
+
+    private int getAttackerResolution(GameObject attacker, GameObject closestFood) {
+        if (closestFood == null) {
+            return getOppositeHeading(attacker);
+        }
+
+        var distanceToAttacker = getDistanceBetween(bot, attacker);
+        var distanceBetweenAttackerAndFood = getDistanceBetween(attacker, closestFood);
+
+        if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndFood > distanceToAttacker)) {
+            return getHeadingBetween(closestFood);
+        }
+        else {
+            return getOppositeHeading(attacker);
+        }
     }
 
     public GameState getGameState() {
@@ -75,9 +135,12 @@ public class BotService {
         return (direction + 360) % 360;
     }
 
+    private int getOppositeHeading(GameObject otherObject) {
+        return toDegrees(Math.atan2(otherObject.getPosition().y - bot.getPosition().y,
+        otherObject.getPosition().x - bot.getPosition().x));
+    }
+
     private int toDegrees(double v) {
         return (int) (v * (180 / Math.PI));
     }
-
-
 }
