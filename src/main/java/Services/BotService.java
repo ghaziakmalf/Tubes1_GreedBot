@@ -39,13 +39,14 @@ public class BotService {
 
     public void computeNextPlayerAction(PlayerAction playerAction) {
         PlayerActions actionID = PlayerActions.Forward;
-        var heading = new Random().nextInt(360);
+        playerAction.action = actionID;
+        int heading = new Random().nextInt(360);
         playerAction.heading = heading;
 
         List<GameObject> playerGameObjects;
         playerGameObjects = gameState.getPlayerGameObjects();
 
-        if (!playerGameObjects.contains(this.bot)) {
+        if (!playerGameObjects.contains(bot)) {
             System.out.println("I am no longer in the game state, and have been consumed");
         }
 
@@ -72,9 +73,14 @@ public class BotService {
             }
         }
 
-        double distanceFromWorldCenter = getDistanceBetween(bot, worldCenter);
+        Position centerPosition = new Position();
+        var distanceFromWorldCenter = getDistanceBetween(bot,new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null));
 
-        if (distanceFromWorldCenter + (1.5 * bot.size) > gameState.world.getRadius()) {
+        World world = gameState.getWorld();
+        Integer radius = world.getRadius();
+
+        if (distanceFromWorldCenter + (1.5 * bot.size) > radius) {
+            worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
             heading = getHeadingBetween(worldCenter);
             System.out.println("Near the edge, going to the center");
             target = worldCenter;
@@ -99,42 +105,42 @@ public class BotService {
 
     private int resolveNewTarget() {
         var heading = new Random().nextInt(360);
-        List<GameObject> nearestFood = gameState.getGameObjects()
-                .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Food)
-                .sorted(Comparator
-                        .comparing(item -> getDistanceBetween(bot, item)))
-                .collect(Collectors.toList());
-        List<GameObject> nearestPlayer = gameState.getPlayerGameObjects()
-                .stream().filter(player -> player.getId() != bot.getId())
-                .sorted(Comparator
-                        .comparing(player -> getDistanceBetween(bot, player)))
-                .collect(Collectors.toList());
-        
-        System.out.println("test");
+        if (!gameState.getGameObjects().isEmpty()) {
+            var nearestFood = gameState.getGameObjects()
+                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Food)
+                    .sorted(Comparator
+                            .comparing(item -> getDistanceBetween(bot, item)))
+                    .collect(Collectors.toList());
+            var nearestPlayer = gameState.getPlayerGameObjects()
+                    .stream().filter(player -> player.getId() != bot.getId())
+                    .sorted(Comparator
+                            .comparing(player -> getDistanceBetween(bot, player)))
+                    .collect(Collectors.toList());
 
-        if ((nearestPlayer.get(0)).size > bot.size) {
-            heading = getAttackerResolution(nearestPlayer.get(0), nearestFood.get(0));
-            targetIsPlayer = false;
-        }
-        else if ((nearestPlayer.get(0)).size < bot.size) {
-            heading = getHeadingBetween(nearestPlayer.get(0));
-            target = nearestPlayer.get(0);
-            targetIsPlayer = true;
-        }
-        else if (nearestFood != null) {
-            heading = getHeadingBetween(nearestFood.get(0));
-            target = nearestFood.get(0);
-            targetIsPlayer = false;
-        }
-        else {
-            target = worldCenter;
-            heading = getHeadingBetween(worldCenter);
-            targetIsPlayer = false;
+            if ((nearestPlayer.get(0)).size > bot.size) {
+                heading = getAttackerResolution(nearestPlayer.get(0), nearestFood.get(0));
+                targetIsPlayer = false;
+            }
+            else if ((nearestPlayer.get(0)).size < bot.size) {
+                heading = getHeadingBetween(nearestPlayer.get(0));
+                target = nearestPlayer.get(0);
+                targetIsPlayer = true;
+            }
+            else if (nearestFood != null) {
+                heading = getHeadingBetween(nearestFood.get(0));
+                target = nearestFood.get(0);
+                targetIsPlayer = false;
+            }
+            else {
+                target = worldCenter;
+                heading = getHeadingBetween(worldCenter);
+                targetIsPlayer = false;
 
-        }
+            }
 
-        if (target == worldCenter) {
-            heading = getHeadingBetween(nearestPlayer.get(0));
+            if (target == worldCenter) {
+                heading = getHeadingBetween(nearestPlayer.get(0));
+            }
         }
 
         return heading;
