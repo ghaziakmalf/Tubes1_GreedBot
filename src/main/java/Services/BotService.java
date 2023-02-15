@@ -14,7 +14,9 @@ public class BotService {
     private PlayerAction playerAction;
     private PlayerAction lastAction;
     private int timeSinceLastAction;
+    private Integer lastBotSize = 10;
     private boolean targetIsPlayer = false;
+    private boolean afterburnerCondition = false;
 
     public BotService() {
         this.playerAction = new PlayerAction();
@@ -46,12 +48,7 @@ public class BotService {
         List<GameObject> playerGameObjects;
         playerGameObjects = gameState.getPlayerGameObjects();
 
-        if (!playerGameObjects.contains(bot)) {
-            System.out.println("I am no longer in the game state, and have been consumed");
-        }
-
         if (target == null || target == worldCenter) {
-            System.out.println("No Current Target, resolving new target");
             heading = resolveNewTarget();
         } else {
             GameObject defaultTarget = target;
@@ -59,17 +56,14 @@ public class BotService {
                 .stream().filter(item -> item.getId() == target.getId())
                 .findFirst().orElseGet(() -> defaultTarget);
             if (targetWithNewValues != defaultTarget) {
-                System.out.println("Previous Target exists, updating resolution");
                 target = targetWithNewValues;
                 if (target.size < bot.size) {
                     heading = getHeadingBetween(target);
                 } else {
-                    System.out.println("Previous Target larger than me, resolving new target");
                     heading = resolveNewTarget();
                 }
             }
             else {
-                System.out.println("Old Target Invalid, resolving new target");
                 heading = resolveNewTarget();
             }
         }
@@ -103,6 +97,19 @@ public class BotService {
             {
                 System.out.println("Firing Torpedoes at target");
                 actionID = PlayerActions.FireTorpedoes;
+            }
+        else if (!afterburnerCondition && targetIsPlayer && bot.size > 25 && ((bot.size - target.size)) >= 10 && bot.torpedoSalvoCount == 0)
+            {
+                lastBotSize = bot.size;
+                System.out.println("Activating afterburner");
+                actionID = PlayerActions.StartAfterburner;
+                afterburnerCondition = true;
+            }
+        else if (afterburnerCondition && ((lastBotSize - bot.size >= 5) || (targetIsPlayer && bot.size < 20 && ((bot.size - target.size)) < 10 && bot.torpedoSalvoCount == 0)))
+            {
+                System.out.println("Deactivating afterburner");
+                actionID = PlayerActions.StopAfterburner;
+                afterburnerCondition = false;
             }
 
         playerAction.action = actionID;
@@ -153,12 +160,13 @@ public class BotService {
             else if ((nearestPlayer.get(0)).size > bot.size) {
                 heading = getAttackerResolution(nearestPlayer.get(0), nearestSuperFood.get(0), nearestFood.get(0));
                 targetIsPlayer = false;
+                System.out.println("Avoiding Opponent");
             }
             else if ((nearestPlayer.get(0)).size < bot.size) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
                 target = nearestPlayer.get(0);
                 targetIsPlayer = true;
-                System.out.println("Targeting Player");
+                System.out.println("Targeting Opponent");
             }
             else if (nearestSuperFood != null) {
                 if (nearestFood != null) {
@@ -196,10 +204,12 @@ public class BotService {
                 target = worldCenter;
                 heading = getHeadingBetween(worldCenter);
                 targetIsPlayer = false;
+                System.out.println("Targeting WoldCenter");
             }
 
             if (target == worldCenter) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
+                System.out.println("Targeting Opponent");
             }
         }
 
@@ -208,7 +218,6 @@ public class BotService {
 
     private int getAttackerResolution(GameObject attacker, GameObject closestSuperFood, GameObject closestFood) {
         if (closestFood == null && closestSuperFood == null) {
-            System.out.println("Avoiding Player");
             return getOppositeHeading(attacker);
         } 
 
@@ -233,7 +242,6 @@ public class BotService {
             }
         }
         else {
-            System.out.println("Avoiding Player");
             return getOppositeHeading(attacker);
         }
     }
