@@ -79,11 +79,21 @@ public class BotService {
         World world = gameState.getWorld();
         Integer radius = world.getRadius();
 
-        if (distanceFromWorldCenter + (1.5 * bot.size) > radius) {
-            worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
-            heading = getHeadingBetween(worldCenter);
-            System.out.println("Near the edge, going to the center");
-            target = worldCenter;
+        if (radius == null) {
+            if (distanceFromWorldCenter + (1.5 * bot.size) > 1000) {
+                worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
+                heading = getHeadingBetween(worldCenter);
+                System.out.println("Near the edge, going to the center");
+                target = worldCenter;
+            }
+        }
+        else {
+            if (distanceFromWorldCenter + (1.5 * bot.size) > radius) {
+                worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
+                heading = getHeadingBetween(worldCenter);
+                System.out.println("Near the edge, going to the center");
+                target = worldCenter;
+            }
         }
 
         if ((targetIsPlayer || target == worldCenter) && bot.size > 20 && bot.torpedoSalvoCount > 0)
@@ -183,7 +193,6 @@ public class BotService {
     }
 
     private int getHeadingBetween(GameObject otherObject) {
-        System.out.println("test3");
         int direction = toDegrees(Math.atan2(otherObject.getPosition().y - bot.getPosition().y,
                 otherObject.getPosition().x - bot.getPosition().x));
         return (direction + 360) % 360;
