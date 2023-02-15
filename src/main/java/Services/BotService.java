@@ -143,10 +143,30 @@ public class BotService {
                 System.out.println("Targeting Player");
             }
             else if (nearestSuperFood != null) {
-                heading = getHeadingBetween(nearestSuperFood.get(0));
-                target = nearestSuperFood.get(0);
-                targetIsPlayer = false;
-                System.out.println("Targeting Superfood");
+                if (nearestFood != null) {
+
+                    var distanceToSuperFood = getDistanceBetween(bot, nearestSuperFood.get(0));
+                    var distanceToFood = getDistanceBetween(bot, nearestFood.get(0));
+                    
+                    if (distanceToSuperFood > distanceToFood) {
+                        heading = getHeadingBetween(nearestFood.get(0));
+                        target = nearestFood.get(0);
+                        targetIsPlayer = false;
+                        System.out.println("Targeting Food");
+                    }
+                    else {
+                        heading = getHeadingBetween(nearestSuperFood.get(0));
+                        target = nearestSuperFood.get(0);
+                        targetIsPlayer = false;
+                        System.out.println("Targeting Superfood"); 
+                    }
+                }
+                else {
+                    heading = getHeadingBetween(nearestSuperFood.get(0));
+                    target = nearestSuperFood.get(0);
+                    targetIsPlayer = false;
+                    System.out.println("Targeting Superfood");  
+                }
             }
             else if (nearestFood != null) {
                 heading = getHeadingBetween(nearestFood.get(0));
@@ -171,20 +191,32 @@ public class BotService {
 
     private int getAttackerResolution(GameObject attacker, GameObject closestSuperFood, GameObject closestFood) {
         if (closestFood == null && closestSuperFood == null) {
+            System.out.println("Avoiding Player");
             return getOppositeHeading(attacker);
         } 
 
         var distanceToAttacker = getDistanceBetween(bot, attacker);
+        var distanceToSuperFood = getDistanceBetween(bot, closestSuperFood);
+        var distanceToFood = getDistanceBetween(bot, closestFood);
         var distanceBetweenAttackerAndSuperFood = getDistanceBetween(attacker, closestSuperFood);
         var distanceBetweenAttackerAndFood = getDistanceBetween(attacker, closestFood);
 
         if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndSuperFood > distanceToAttacker)) {
-            return getHeadingBetween(closestSuperFood);
+            if (distanceToFood > distanceToSuperFood) {
+                return getHeadingBetween(closestSuperFood);
+            } else{
+                return getHeadingBetween(closestFood);
+            }
         }
         else if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndFood > distanceToAttacker)) {
-            return getHeadingBetween(closestFood);
+            if (distanceToSuperFood > distanceToFood) {
+                return getHeadingBetween(closestFood);
+            } else{
+                return getHeadingBetween(closestSuperFood);
+            }
         }
         else {
+            System.out.println("Avoiding Player");
             return getOppositeHeading(attacker);
         }
     }
