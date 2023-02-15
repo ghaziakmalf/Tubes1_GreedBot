@@ -51,7 +51,7 @@ public class BotService {
         }
 
         if (target == null || target == worldCenter) {
-            System.out.println("No Current Target, resolving new target");
+            // System.out.println("No Current Target, resolving new target");
             heading = resolveNewTarget();
         } else {
             GameObject defaultTarget = target;
@@ -59,10 +59,10 @@ public class BotService {
                 .stream().filter(item -> item.getId() == target.getId())
                 .findFirst().orElseGet(() -> defaultTarget);
             if (targetWithNewValues == defaultTarget) {
-                System.out.println("Old Target Invalid, resolving new target");
+                // System.out.println("Old Target Invalid, resolving new target");
                 heading = resolveNewTarget();
             } else {
-                System.out.println("Previous Target exists, updating resolution");
+                // System.out.println("Previous Target exists, updating resolution");
                 target = targetWithNewValues;
                 if (target.size < bot.size) {
                     heading = getHeadingBetween(target);
@@ -79,7 +79,7 @@ public class BotService {
         World world = gameState.getWorld();
         Integer radius = world.getRadius();
 
-        if (distanceFromWorldCenter + (1.5 * bot.size) > radius) {
+        if (distanceFromWorldCenter + (1.5 * bot.size) > 1000) {
             worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
             heading = getHeadingBetween(worldCenter);
             System.out.println("Near the edge, going to the center");
@@ -111,6 +111,11 @@ public class BotService {
                     .sorted(Comparator
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
+            var nearestSuperFood = gameState.getGameObjects()
+                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Superfood)
+                    .sorted(Comparator
+                            .comparing(item -> getDistanceBetween(bot, item)))
+                    .collect(Collectors.toList());
             var nearestPlayer = gameState.getPlayerGameObjects()
                     .stream().filter(player -> player.getId() != bot.getId())
                     .sorted(Comparator
@@ -118,18 +123,26 @@ public class BotService {
                     .collect(Collectors.toList());
 
             if ((nearestPlayer.get(0)).size > bot.size) {
-                heading = getAttackerResolution(nearestPlayer.get(0), nearestFood.get(0));
+                heading = getAttackerResolution(nearestPlayer.get(0), nearestSuperFood.get(0), nearestFood.get(0));
                 targetIsPlayer = false;
             }
             else if ((nearestPlayer.get(0)).size < bot.size) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
                 target = nearestPlayer.get(0);
                 targetIsPlayer = true;
+                System.out.println("Targeting Player");
+            }
+            else if (nearestSuperFood != null) {
+                heading = getHeadingBetween(nearestSuperFood.get(0));
+                target = nearestSuperFood.get(0);
+                targetIsPlayer = false;
+                System.out.println("Targeting Superfood");
             }
             else if (nearestFood != null) {
                 heading = getHeadingBetween(nearestFood.get(0));
                 target = nearestFood.get(0);
                 targetIsPlayer = false;
+                System.out.println("Targeting Food");
             }
             else {
                 target = worldCenter;
@@ -146,15 +159,19 @@ public class BotService {
         return heading;
     }
 
-    private int getAttackerResolution(GameObject attacker, GameObject closestFood) {
-        if (closestFood == null) {
+    private int getAttackerResolution(GameObject attacker, GameObject closestSuperFood, GameObject closestFood) {
+        if (closestFood == null && closestSuperFood == null) {
             return getOppositeHeading(attacker);
-        }
+        } 
 
         var distanceToAttacker = getDistanceBetween(bot, attacker);
+        var distanceBetweenAttackerAndSuperFood = getDistanceBetween(attacker, closestSuperFood);
         var distanceBetweenAttackerAndFood = getDistanceBetween(attacker, closestFood);
 
-        if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndFood > distanceToAttacker)) {
+        if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndSuperFood > distanceToAttacker)) {
+            return getHeadingBetween(closestSuperFood);
+        }
+        else if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndFood > distanceToAttacker)) {
             return getHeadingBetween(closestFood);
         }
         else {
@@ -183,7 +200,6 @@ public class BotService {
     }
 
     private int getHeadingBetween(GameObject otherObject) {
-        System.out.println("test3");
         int direction = toDegrees(Math.atan2(otherObject.getPosition().y - bot.getPosition().y,
                 otherObject.getPosition().x - bot.getPosition().x));
         return (direction + 360) % 360;
