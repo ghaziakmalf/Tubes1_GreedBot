@@ -51,18 +51,15 @@ public class BotService {
         }
 
         if (target == null || target == worldCenter) {
-            // System.out.println("No Current Target, resolving new target");
+            System.out.println("No Current Target, resolving new target");
             heading = resolveNewTarget();
         } else {
             GameObject defaultTarget = target;
             GameObject targetWithNewValues = gameState.getGameObjects()
                 .stream().filter(item -> item.getId() == target.getId())
                 .findFirst().orElseGet(() -> defaultTarget);
-            if (targetWithNewValues == defaultTarget) {
-                // System.out.println("Old Target Invalid, resolving new target");
-                heading = resolveNewTarget();
-            } else {
-                // System.out.println("Previous Target exists, updating resolution");
+            if (targetWithNewValues != defaultTarget) {
+                System.out.println("Previous Target exists, updating resolution");
                 target = targetWithNewValues;
                 if (target.size < bot.size) {
                     heading = getHeadingBetween(target);
@@ -70,6 +67,10 @@ public class BotService {
                     System.out.println("Previous Target larger than me, resolving new target");
                     heading = resolveNewTarget();
                 }
+            }
+            else {
+                System.out.println("Old Target Invalid, resolving new target");
+                heading = resolveNewTarget();
             }
         }
 
@@ -85,6 +86,7 @@ public class BotService {
                 heading = getHeadingBetween(worldCenter);
                 System.out.println("Near the edge, going to the center");
                 target = worldCenter;
+                targetIsPlayer = false;
             }
         }
         else {
@@ -93,10 +95,11 @@ public class BotService {
                 heading = getHeadingBetween(worldCenter);
                 System.out.println("Near the edge, going to the center");
                 target = worldCenter;
+                targetIsPlayer = false;
             }
         }
 
-        if ((targetIsPlayer || target == worldCenter) && bot.size > 20 && bot.torpedoSalvoCount > 0)
+        if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0)
             {
                 System.out.println("Firing Torpedoes at target");
                 actionID = PlayerActions.FireTorpedoes;
@@ -131,8 +134,23 @@ public class BotService {
                     .sorted(Comparator
                             .comparing(player -> getDistanceBetween(bot, player)))
                     .collect(Collectors.toList());
+            var nearestGasCloud = gameState.getGameObjects()
+                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.GasCloud)
+                    .sorted(Comparator
+                            .comparing(item -> getDistanceBetween(bot, item)))
+                    .collect(Collectors.toList());
 
-            if ((nearestPlayer.get(0)).size > bot.size) {
+            if (bot.size > 20 && bot.torpedoSalvoCount > 0) {
+                heading = getHeadingBetween(nearestPlayer.get(0));
+                target = nearestPlayer.get(0);
+                targetIsPlayer = true;
+            }
+            else if ((getDistanceBetween(nearestGasCloud.get(0), bot)) < 20) {
+                heading = getHeadingBetween(nearestGasCloud.get(0)) + 90;
+                targetIsPlayer = false;
+                System.out.println("Avoiding Gas Cloud");
+            }
+            else if ((nearestPlayer.get(0)).size > bot.size) {
                 heading = getAttackerResolution(nearestPlayer.get(0), nearestSuperFood.get(0), nearestFood.get(0));
                 targetIsPlayer = false;
             }
@@ -178,7 +196,6 @@ public class BotService {
                 target = worldCenter;
                 heading = getHeadingBetween(worldCenter);
                 targetIsPlayer = false;
-
             }
 
             if (target == worldCenter) {
