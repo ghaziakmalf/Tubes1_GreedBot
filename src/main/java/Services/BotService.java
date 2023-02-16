@@ -10,8 +10,10 @@ public class BotService {
     private GameObject bot;
     private GameState gameState;
     private GameObject target;
+    private GameObject nearestOpponent;
     private GameObject worldCenter;
     private PlayerAction playerAction;
+    private boolean avoidingPlayer = false;
     private boolean targetIsPlayer = false;
     private boolean afterburnerCondition = false;
 
@@ -107,6 +109,11 @@ public class BotService {
                 System.out.println("Firing Torpedoes at target");
                 actionID = PlayerActions.FireTorpedoes;
             }
+        else if (avoidingPlayer && (bot.shieldCount > 0) && (getDistanceBetween(nearestOpponent, bot) < 3*nearestOpponent.size) && (bot.size > 50) && (nearestOpponent.torpedoSalvoCount > 0))
+            {
+                System.out.println("Activating shield");
+                actionID = PlayerActions.ActivateShield;
+            }
 
         playerAction.action = actionID;
         playerAction.heading = heading;
@@ -140,24 +147,30 @@ public class BotService {
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
 
+            nearestOpponent = nearestPlayer.get(0);
+
             if (bot.size > 20 && bot.torpedoSalvoCount > 0) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
                 target = nearestPlayer.get(0);
+                avoidingPlayer = false;
                 targetIsPlayer = true;
             }
             else if ((getDistanceBetween(nearestGasCloud.get(0), bot)) < 20+bot.size) {
                 heading = getHeadingBetween(nearestGasCloud.get(0)) + 90;
+                avoidingPlayer = false;
                 targetIsPlayer = false;
                 System.out.println("Avoiding Gas Cloud");
             }
             else if ((nearestPlayer.get(0)).size > bot.size) {
                 heading = getAttackerResolution(nearestPlayer.get(0), nearestSuperFood.get(0), nearestFood.get(0));
+                avoidingPlayer = true;
                 targetIsPlayer = false;
                 System.out.println("Avoiding Opponent");
             }
             else if ((nearestPlayer.get(0)).size < bot.size) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
                 target = nearestPlayer.get(0);
+                avoidingPlayer = false;
                 targetIsPlayer = true;
                 System.out.println("Targeting Opponent");
             }
@@ -170,12 +183,14 @@ public class BotService {
                     if (distanceToSuperFood > distanceToFood) {
                         heading = getHeadingBetween(nearestFood.get(0));
                         target = nearestFood.get(0);
+                        avoidingPlayer = false;
                         targetIsPlayer = false;
                         System.out.println("Targeting Food");
                     }
                     else {
                         heading = getHeadingBetween(nearestSuperFood.get(0));
                         target = nearestSuperFood.get(0);
+                        avoidingPlayer = false;
                         targetIsPlayer = false;
                         System.out.println("Targeting Superfood"); 
                     }
@@ -183,6 +198,7 @@ public class BotService {
                 else {
                     heading = getHeadingBetween(nearestSuperFood.get(0));
                     target = nearestSuperFood.get(0);
+                    avoidingPlayer = false;
                     targetIsPlayer = false;
                     System.out.println("Targeting Superfood");  
                 }
@@ -190,12 +206,14 @@ public class BotService {
             else if (nearestFood != null) {
                 heading = getHeadingBetween(nearestFood.get(0));
                 target = nearestFood.get(0);
+                avoidingPlayer = false;
                 targetIsPlayer = false;
                 System.out.println("Targeting Food");
             }
             else {
                 target = worldCenter;
                 heading = getHeadingBetween(worldCenter);
+                avoidingPlayer = false;
                 targetIsPlayer = false;
                 System.out.println("Targeting WoldCenter");
             }
