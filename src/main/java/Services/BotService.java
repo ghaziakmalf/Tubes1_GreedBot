@@ -12,9 +12,6 @@ public class BotService {
     private GameObject target;
     private GameObject worldCenter;
     private PlayerAction playerAction;
-    private PlayerAction lastAction;
-    private int timeSinceLastAction;
-    private Integer lastBotSize = 10;
     private boolean targetIsPlayer = false;
     private boolean afterburnerCondition = false;
 
@@ -93,30 +90,26 @@ public class BotService {
             }
         }
 
-        if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0)
+        if (!afterburnerCondition && targetIsPlayer && (getDistanceBetween(target, bot) < 2*bot.size) && ((bot.size - target.size) >= 20))
             {
-                System.out.println("Firing Torpedoes at target");
-                actionID = PlayerActions.FireTorpedoes;
-            }
-        else if (!afterburnerCondition && targetIsPlayer && bot.size > 25 && ((bot.size - target.size)) >= 10 && bot.torpedoSalvoCount == 0)
-            {
-                lastBotSize = bot.size;
                 System.out.println("Activating afterburner");
                 actionID = PlayerActions.StartAfterburner;
                 afterburnerCondition = true;
             }
-        else if (afterburnerCondition && ((lastBotSize - bot.size >= 5) || (targetIsPlayer && bot.size < 20 && ((bot.size - target.size)) < 10 && bot.torpedoSalvoCount == 0)))
+        else if (afterburnerCondition && ((targetIsPlayer && (getDistanceBetween(target, bot) > 2*bot.size)) || (!targetIsPlayer) || ((bot.size - target.size) < 20)))
             {
                 System.out.println("Deactivating afterburner");
                 actionID = PlayerActions.StopAfterburner;
                 afterburnerCondition = false;
             }
+        else if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0)
+            {
+                System.out.println("Firing Torpedoes at target");
+                actionID = PlayerActions.FireTorpedoes;
+            }
 
         playerAction.action = actionID;
         playerAction.heading = heading;
-
-        lastAction = playerAction;
-        timeSinceLastAction = 0;
 
         System.out.println("Player action:" + playerAction.action + ":" + playerAction.heading);
 
@@ -152,7 +145,7 @@ public class BotService {
                 target = nearestPlayer.get(0);
                 targetIsPlayer = true;
             }
-            else if ((getDistanceBetween(nearestGasCloud.get(0), bot)) < 20) {
+            else if ((getDistanceBetween(nearestGasCloud.get(0), bot)) < 20+bot.size) {
                 heading = getHeadingBetween(nearestGasCloud.get(0)) + 90;
                 targetIsPlayer = false;
                 System.out.println("Avoiding Gas Cloud");
