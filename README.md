@@ -24,7 +24,7 @@ Terdapat beberapa algoritma yang dapat digunakan sebagai algoritma bot. Beberapa
 2. IntelIiJ IDEA
 3. NodeJS
 4. .Net Core 3.1
-5. VS CODE
+5. Vs Code
 
 ## Cara Menjalankan Program
 1. Pastikan semua requirement telah diinstall
