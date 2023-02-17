@@ -11,7 +11,6 @@
 3. Ahmad Ghulam Ilham   (13521118) 
 
 ## Struktur Direktori
-<br>
 |---  `src` => berisi *source code* dari program java<br>
 |---  `target` => berisi hasil build dari source code, termasuk executable (File .jar)<br>
 |---  `doc` => berisi file laporan<br>
