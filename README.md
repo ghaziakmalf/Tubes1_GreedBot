@@ -10,6 +10,12 @@
 2. Ilham Akbar			(13521068) 
 3. Ahmad Ghulam Ilham   (13521118) 
 
+## Struktur Direktori
+<br>
+|---  `src` => berisi *source code* dari program java<br>
+|---  `target` => berisi hasil build dari source code, termasuk executable (File .jar)<br>
+|---  `doc` => berisi file laporan<br>
+
 ## Implementasi Algoritma Greedy ke dalam Bot Permainan 
 
 Terdapat beberapa algoritma yang dapat digunakan sebagai algoritma bot. Beberapa algoritma yang dapat digunakan adalah diantaranya algoritma brute force, algoritma greedy, algoritma tree traversal, dan lain-lain. Tetapi, semua algoritma tersebut memiliki kelebihan dan kekurangannya masing-masing. Pada algoritma brute force, dibutuhkan waktu dan resource yang banyak untuk mengetes dan menilai setiap kemungkinan command yang dapat terjadi, meskipun hasil paling optimum yang ditemukan merupakan optimum global pada keadaan tersebut. Kemudian, pada algoritma greedy, tidak diperlukan waktu atau resource yang banyak. Tetapi, dibutuhkan teknik heuristik yang didefinisikan oleh logika dan pola pikir masing-masing pemrogram. Teknik heuristik tersebut mungkin belum dapat menghasilkan solusi optimum global dan walaupun solusi tersebut merupakan solusi optimum global, solusi tersebut susah dibuktikan kebenarannya secara matematis. Algoritma berikutnya yang dapat digunakan adalah algoritma tree traversal. Algoritma ini umum digunakan pada bot game, dikarenakan pada algoritma ini terdapat pengecekkan beberapa kasus tertentu untuk menentukan langkah selanjutnya yang diambil. Tetapi, algoritma ini tidak seintuitif algoritma brute force maupun algoritma greedy bagi pemrogram. Oleh karena itu, penulis menggunakan algoritma greedy sebagai algoritma pembentukan bot dikarenakan cukup intuitif serta tidak memerlukan waktu atau resource yang terlalu banyak. Selain itu, terdapat cukup banyak kemungkinan solusi greedy yang dapat dieksplorasi oleh penulis. Meskipun terdapat peluang bahwa penulis tidak dapat menciptakan algoritma greedy yang menghasilkan solusi optimum global, tetapi setidaknya penulis dapat selalu mencapai solusi optimum lokal yang nilainya mendekati solusi optimum global. 
