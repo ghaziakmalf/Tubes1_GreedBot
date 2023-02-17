@@ -43,9 +43,6 @@ public class BotService {
     public void computeNextPlayerAction(PlayerAction playerAction) {
         int heading = new Random().nextInt(360);
 
-        List<GameObject> playerGameObjects;
-        playerGameObjects = gameState.getPlayerGameObjects();
-
         if (target == null || target == worldCenter) {
             heading = resolveNewTarget();
         } 
@@ -89,7 +86,7 @@ public class BotService {
                 afterburnerCondition = false;
                 return PlayerActions.StopAfterburner;
             }
-        else if (!teleporterCondition && targetIsPlayer && bot.teleporterCount > 0 && ((bot.size - target.size) > 40) && (getDistanceBetween(target, bot) < 5*bot.size))
+        else if (!teleporterCondition && targetIsPlayer && bot.teleporterCount > 0 && ((bot.size - target.size) > 30) && (getDistanceBetween(target, bot) < 500))
             {
                 System.out.println("Firing Teleporter");
                 teleporterCondition = true;
@@ -101,7 +98,7 @@ public class BotService {
                 teleporterCondition = false;
                 return PlayerActions.Teleport;
             }
-        else if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0)
+        else if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0 && (getDistanceBetween(target, bot) < 500))
             {
                 System.out.println("Firing Torpedoes at target");
                 return PlayerActions.FireTorpedoes;
@@ -109,7 +106,7 @@ public class BotService {
         else if (avoidingPlayer && (bot.shieldCount > 0) && (getDistanceBetween(nearestOpponent, bot) < 3*nearestOpponent.size) && (bot.size > 50) && (nearestOpponent.torpedoSalvoCount > 0))
             {
                 System.out.println("Activating shield");
-                return PlayerActions.FireTorpedoes;
+                return PlayerActions.ActivateShield;
             }
         else 
             {
@@ -141,7 +138,9 @@ public class BotService {
                             .comparing(player -> getDistanceBetween(bot, player)))
                     .collect(Collectors.toList());
 
-            nearestOpponent = nearestPlayer.get(0);
+            if (nearestPlayer.size() > 0) {
+                nearestOpponent = nearestPlayer.get(0);
+            }
 
             if (teleporterCondition) {
                 var firedTeleporter = gameState.getGameObjects()
