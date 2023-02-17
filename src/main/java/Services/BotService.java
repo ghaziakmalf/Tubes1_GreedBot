@@ -80,7 +80,7 @@ public class BotService {
                 afterburnerCondition = true;
                 return PlayerActions.StartAfterburner;
             }
-        else if (afterburnerCondition && ((targetIsPlayer && (getDistanceBetween(target, bot) > 2*bot.size)) || (!targetIsPlayer) || ((bot.size - target.size) < 20)))
+        else if (afterburnerCondition && (((getDistanceBetween(target, bot) > 2*bot.size)) || (!targetIsPlayer) || ((bot.size - target.size) < 20)))
             {
                 System.out.println("Deactivating afterburner");
                 afterburnerCondition = false;
