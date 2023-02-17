@@ -53,13 +53,13 @@ public class BotService {
     }  
 
     private PlayerActions resolveNewAction() {
-        if (!afterburnerCondition && targetIsPlayer && (getDistanceBetween(target, bot) < 2*bot.size) && ((bot.size - target.size) >= 20))
+        if (!afterburnerCondition && targetIsPlayer && (getDistanceBetween(target, bot) < (100 + bot.size + target.size)) && ((bot.size - target.size) >= 20))
             {
                 System.out.println("Activating afterburner");
                 afterburnerCondition = true;
                 return PlayerActions.StartAfterburner;
             }
-        else if (afterburnerCondition && (((getDistanceBetween(target, bot) > 2*bot.size)) || (!targetIsPlayer) || ((bot.size - target.size) < 20)))
+        else if (afterburnerCondition && ((!targetIsPlayer) || ((getDistanceBetween(target, bot) > 2*bot.size)) || ((bot.size - target.size) < 20)))
             {
                 System.out.println("Deactivating afterburner");
                 afterburnerCondition = false;
@@ -71,13 +71,13 @@ public class BotService {
                 supernovaCondition = true;
                 return PlayerActions.FireSupernova;
             }
-        else if (supernovaCondition && targetIsPlayer && supernovaBomb != null && (getDistanceBetween(target, supernovaBomb) < 200))
+        else if (supernovaCondition && targetIsPlayer && supernovaBomb != null && (getDistanceBetween(target, supernovaBomb) < (200 + target.size)) && (getDistanceBetween(supernovaBomb, bot) > (200+bot.size)))
             {
                 System.out.println("Detonating Supernova");
                 supernovaCondition = false;
                 return PlayerActions.DetonateSupernova;
             }
-        else if (!teleporterCondition && targetIsPlayer && bot.teleporterCount > 0 && ((bot.size - target.size) > 30) && (getDistanceBetween(target, bot) > 500))
+        else if (!teleporterCondition && targetIsPlayer && bot.teleporterCount > 0 && ((bot.size - target.size) > 30) && (getDistanceBetween(target, bot) > (500+target.size+bot.size)))
             {
                 System.out.println("Firing Teleporter");
                 teleporterCondition = true;
@@ -89,12 +89,12 @@ public class BotService {
                 teleporterCondition = false;
                 return PlayerActions.Teleport;
             }
-        else if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0 && (getDistanceBetween(target, bot) < 200))
+        else if ((targetIsPlayer || avoidingPlayer) && bot.size > 40 && bot.torpedoSalvoCount > 0 && (getDistanceBetween(target, bot) < (200+target.size+bot.size)) && (target.size > (0.5*bot.size)))
             {
                 System.out.println("Firing Torpedoes at target");
                 return PlayerActions.FireTorpedoes;
             }
-        else if (avoidingPlayer && (bot.shieldCount > 0) && (getDistanceBetween(nearestOpponent, bot) < 3*nearestOpponent.size) && (bot.size > 50) && (nearestOpponent.torpedoSalvoCount > 0))
+        else if (avoidingPlayer && (bot.shieldCount > 0) && (getDistanceBetween(nearestOpponent, bot) < 3*nearestOpponent.size) && (bot.size > 60) && (nearestOpponent.torpedoSalvoCount > 0))
             {
                 System.out.println("Activating shield");
                 return PlayerActions.ActivateShield;
@@ -154,43 +154,45 @@ public class BotService {
             if (availableSupernova.size() > 0) {
                 supernovaPickup = availableSupernova.get(0);
             }
+            
+            if (supernovaCondition) {
+                var bombSupernova = gameState.getGameObjects()
+                        .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SupernovaBomb)
+                        .sorted(Comparator
+                                .comparing(item -> getDistanceBetween(bot, item)))
+                        .collect(Collectors.toList());
 
-            var bombSupernova = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SupernovaBomb)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
-
-            if (bombSupernova.size() > 0) {
-                supernovaBomb = availableSupernova.get(0);
+                if (bombSupernova.size() > 0) {
+                    supernovaBomb = bombSupernova.get(0);
+                }
             }
 
-            if (bot.size > 50 && bot.torpedoSalvoCount > 0) {
+            if (bot.size > 40 && bot.torpedoSalvoCount > 0 && (getDistanceBetween(nearestPlayer.get(0), bot) < (200 + target.size + bot.size))) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
                 target = nearestPlayer.get(0);
                 avoidingPlayer = false;
                 targetIsPlayer = true;
             }
-            else if ((nearestPlayer.get(0)).size > bot.size && (getDistanceBetween(nearestPlayer.get(0), bot) < 200)) {
+            else if ((nearestPlayer.get(0)).size > bot.size && (getDistanceBetween(nearestPlayer.get(0), bot) < (200 + target.size + bot.size))) {
                 heading = getAttackerResolution(nearestPlayer.get(0), nearestSuperFood.get(0), nearestFood.get(0));
                 avoidingPlayer = true;
                 targetIsPlayer = false;
                 System.out.println("Avoiding Opponent");
             }
-            else if ((getDistanceBetween(nearestGasCloud.get(0), bot)) < 3*bot.size) {
-                heading = getHeadingBetween(nearestGasCloud.get(0)) + 90;
+            else if ((getDistanceBetween(nearestGasCloud.get(0), bot)) < ((nearestGasCloud.get(0)).size + bot.size + 50)) {
+                heading = (getHeadingBetween(nearestGasCloud.get(0)) + 90) % 360;
                 avoidingPlayer = false;
                 targetIsPlayer = false;
                 System.out.println("Avoiding Gas Cloud");
             }
-            else if ((nearestPlayer.get(0)).size < bot.size && (getDistanceBetween(nearestPlayer.get(0), bot) < 200)) {
+            else if ((nearestPlayer.get(0)).size < bot.size && (getDistanceBetween(nearestPlayer.get(0), bot) < (200 + target.size + bot.size))) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
                 target = nearestPlayer.get(0);
                 avoidingPlayer = false;
                 targetIsPlayer = true;
                 System.out.println("Targeting Opponent");
             }
-            else if ((supernovaPickup != null) && (getDistanceBetween(supernovaPickup, bot) < 250)) {
+            else if ((supernovaPickup != null) && (getDistanceBetween(supernovaPickup, bot) < (200 + bot.size))) {
                 heading = getHeadingBetween(supernovaPickup);
                 target = supernovaPickup;
                 avoidingPlayer = false;
@@ -234,6 +236,11 @@ public class BotService {
                 System.out.println("Targeting Food");
             }
             
+            if (target == worldCenter) {
+                System.out.println("Finding new target");
+                heading = resolveNewTarget();
+            }
+
             Position centerPosition = new Position();
             var distanceFromWorldCenter = getDistanceBetween(bot,new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null));
     
@@ -242,7 +249,7 @@ public class BotService {
     
             if (radius == null) {
                 if (distanceFromWorldCenter + (1.5 * bot.size) > 1000) {
-                    worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
+                    worldCenter = new GameObject(null, 0, null, null, centerPosition, null, null, null, null, null, null);
                     heading = getHeadingBetween(worldCenter);
                     target = worldCenter;
                     targetIsPlayer = false;
@@ -251,7 +258,7 @@ public class BotService {
             }
             else {
                 if (distanceFromWorldCenter + (1.5 * bot.size) > radius) {
-                    worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
+                    worldCenter = new GameObject(null, 0, null, null, centerPosition, null, null, null, null, null, null);
                     heading = getHeadingBetween(worldCenter);
                     target = worldCenter;
                     targetIsPlayer = false;
@@ -268,30 +275,26 @@ public class BotService {
             return getOppositeHeading(attacker);
         } 
 
-        var distanceToAttacker = getDistanceBetween(bot, attacker);
         var distanceToSuperFood = getDistanceBetween(bot, closestSuperFood);
         var distanceToFood = getDistanceBetween(bot, closestFood);
         var distanceBetweenAttackerAndSuperFood = getDistanceBetween(attacker, closestSuperFood);
         var distanceBetweenAttackerAndFood = getDistanceBetween(attacker, closestFood);
 
-        if ((distanceToAttacker > attacker.speed) && ((distanceBetweenAttackerAndSuperFood - distanceToAttacker) > 2*attacker.size)) {
-            if (distanceToFood > distanceToSuperFood) {
+        if (distanceToFood > distanceToSuperFood) {
+            if (2*distanceToSuperFood < distanceBetweenAttackerAndSuperFood) {
                 return getHeadingBetween(closestSuperFood);
             } 
             else {
-                return getHeadingBetween(closestFood);
-            }
-        }
-        else if ((distanceToAttacker > attacker.speed) && ((distanceBetweenAttackerAndFood - distanceToAttacker) > 2*attacker.size)) {
-            if (distanceToSuperFood > distanceToFood) {
-                return getHeadingBetween(closestFood);
-            } 
-            else {
-                return getHeadingBetween(closestSuperFood);
+                return getOppositeHeading(attacker);
             }
         }
         else {
-            return getOppositeHeading(attacker);
+            if (2*distanceToFood < distanceBetweenAttackerAndFood) {
+                return getHeadingBetween(closestFood);
+            } 
+            else {
+                return getOppositeHeading(attacker);
+            }
         }
     }
 
