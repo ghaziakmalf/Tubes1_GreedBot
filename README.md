@@ -2,7 +2,7 @@
 ## Tugas Besar 1 Stima 2022/2023 - JavaBot Galaxio
 
 <p align="center">
-    <img src=image.png
+    <img src= https://drive.google.com/file/d/1XQHJDLa0I5j-DoRYLPRUZgR21cK4-xDa/view?usp=sharing
 </p>
 
 ## Kelompok GreedBot
