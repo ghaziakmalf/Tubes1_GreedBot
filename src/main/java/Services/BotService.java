@@ -11,11 +11,13 @@ public class BotService {
     private GameState gameState;
     private GameObject target;
     private GameObject nearestOpponent;
+    private GameObject teleporter;
     private GameObject worldCenter;
     private PlayerAction playerAction;
     private boolean avoidingPlayer = false;
     private boolean targetIsPlayer = false;
     private boolean afterburnerCondition = false;
+    private boolean teleporterCondition = false;
 
     public BotService() {
         this.playerAction = new PlayerAction();
@@ -87,6 +89,18 @@ public class BotService {
                 afterburnerCondition = false;
                 return PlayerActions.StopAfterburner;
             }
+        else if (!teleporterCondition && targetIsPlayer && bot.teleporterCount > 0 && ((bot.size - target.size) > 40) && (getDistanceBetween(target, bot) < 5*bot.size))
+            {
+                System.out.println("Firing Teleporter");
+                teleporterCondition = true;
+                return PlayerActions.FireTeleport;
+            }
+        else if (teleporterCondition && targetIsPlayer && teleporter != null && (getDistanceBetween(target, teleporter) < 2*nearestOpponent.size))
+            {
+                System.out.println("Teleporting");
+                teleporterCondition = false;
+                return PlayerActions.Teleport;
+            }
         else if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0)
             {
                 System.out.println("Firing Torpedoes at target");
@@ -116,18 +130,30 @@ public class BotService {
                     .sorted(Comparator
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
-            var nearestPlayer = gameState.getPlayerGameObjects()
-                    .stream().filter(player -> player.getId() != bot.getId())
-                    .sorted(Comparator
-                            .comparing(player -> getDistanceBetween(bot, player)))
-                    .collect(Collectors.toList());
             var nearestGasCloud = gameState.getGameObjects()
                     .stream().filter(item -> item.getGameObjectType() == ObjectTypes.GasCloud)
                     .sorted(Comparator
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
+            var nearestPlayer = gameState.getPlayerGameObjects()
+                    .stream().filter(player -> player.getId() != bot.getId())
+                    .sorted(Comparator
+                            .comparing(player -> getDistanceBetween(bot, player)))
+                    .collect(Collectors.toList());
 
             nearestOpponent = nearestPlayer.get(0);
+
+            if (teleporterCondition) {
+                var firedTeleporter = gameState.getGameObjects()
+                        .stream().filter(item -> item.getGameObjectType() == ObjectTypes.Teleporter)
+                        .sorted(Comparator
+                                .comparing(item -> getDistanceBetween(nearestOpponent, item)))
+                        .collect(Collectors.toList());
+
+                if (firedTeleporter.size() > 0) {
+                    teleporter = firedTeleporter.get(0);
+                }
+            }
 
             if (bot.size > 20 && bot.torpedoSalvoCount > 0) {
                 heading = getHeadingBetween(nearestPlayer.get(0));
