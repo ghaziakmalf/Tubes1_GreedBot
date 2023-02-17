@@ -19,13 +19,6 @@
 
 Terdapat beberapa algoritma yang dapat digunakan sebagai algoritma bot. Beberapa algoritma yang dapat digunakan adalah diantaranya algoritma brute force, algoritma greedy, algoritma tree traversal, dan lain-lain. Tetapi, semua algoritma tersebut memiliki kelebihan dan kekurangannya masing-masing. Pada algoritma brute force, dibutuhkan waktu dan resource yang banyak untuk mengetes dan menilai setiap kemungkinan command yang dapat terjadi, meskipun hasil paling optimum yang ditemukan merupakan optimum global pada keadaan tersebut. Kemudian, pada algoritma greedy, tidak diperlukan waktu atau resource yang banyak. Tetapi, dibutuhkan teknik heuristik yang didefinisikan oleh logika dan pola pikir masing-masing pemrogram. Teknik heuristik tersebut mungkin belum dapat menghasilkan solusi optimum global dan walaupun solusi tersebut merupakan solusi optimum global, solusi tersebut susah dibuktikan kebenarannya secara matematis. Algoritma berikutnya yang dapat digunakan adalah algoritma tree traversal. Algoritma ini umum digunakan pada bot game, dikarenakan pada algoritma ini terdapat pengecekkan beberapa kasus tertentu untuk menentukan langkah selanjutnya yang diambil. Tetapi, algoritma ini tidak seintuitif algoritma brute force maupun algoritma greedy bagi pemrogram. Oleh karena itu, penulis menggunakan algoritma greedy sebagai algoritma pembentukan bot dikarenakan cukup intuitif serta tidak memerlukan waktu atau resource yang terlalu banyak. Selain itu, terdapat cukup banyak kemungkinan solusi greedy yang dapat dieksplorasi oleh penulis. Meskipun terdapat peluang bahwa penulis tidak dapat menciptakan algoritma greedy yang menghasilkan solusi optimum global, tetapi setidaknya penulis dapat selalu mencapai solusi optimum lokal yang nilainya mendekati solusi optimum global. 
 
-## Requirement dan Instalasi
-1. Java version 11
-2. IntelIiJ IDEA
-3. NodeJS
-4. .Net Core 3.1
-5. Vs Code
-
 ## Cara Menjalankan Program
 1. Pastikan semua requirement telah diinstall
 2. Lakukan konfigurasi jumlah bot yang ingin dimainkan pada file JSON ”appsettings.json” dalam folder “runner-publish” dan “engine-publish”
@@ -47,4 +40,10 @@ Terdapat beberapa algoritma yang dapat digunakan sebagai algoritma bot. Beberapa
 6. Pilih start, pause, rewind, dan reset
 7. Bermain!!
 
+## Requirement dan Instalasi
+1. Java version 11  (https://www.oracle.com/java/technologies/downloads/#java8)
+2. IntelIiJ IDEA    (https://www.jetbrains.com/idea/)
+3. NodeJS           (https://nodejs.org/en/download/)
+4. .Net Core 3.1    (https://dotnet.microsoft.com/en-us/download/dotnet/3.1)
+5. Vs Code          (https://code.visualstudio.com/Download)
 
