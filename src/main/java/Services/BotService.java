@@ -39,17 +39,15 @@ public class BotService {
     }
 
     public void computeNextPlayerAction(PlayerAction playerAction) {
-        PlayerActions actionID = PlayerActions.Forward;
-        playerAction.action = actionID;
         int heading = new Random().nextInt(360);
-        playerAction.heading = heading;
 
         List<GameObject> playerGameObjects;
         playerGameObjects = gameState.getPlayerGameObjects();
 
         if (target == null || target == worldCenter) {
             heading = resolveNewTarget();
-        } else {
+        } 
+        else {
             GameObject defaultTarget = target;
             GameObject targetWithNewValues = gameState.getGameObjects()
                 .stream().filter(item -> item.getId() == target.getId())
@@ -58,7 +56,8 @@ public class BotService {
                 target = targetWithNewValues;
                 if (target.size < bot.size) {
                     heading = getHeadingBetween(target);
-                } else {
+                } 
+                else {
                     heading = resolveNewTarget();
                 }
             }
@@ -67,61 +66,42 @@ public class BotService {
             }
         }
 
-        Position centerPosition = new Position();
-        var distanceFromWorldCenter = getDistanceBetween(bot,new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null));
-
-        World world = gameState.getWorld();
-        Integer radius = world.getRadius();
-
-        if (radius == null) {
-            if (distanceFromWorldCenter + (1.5 * bot.size) > 1000) {
-                worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
-                heading = getHeadingBetween(worldCenter);
-                System.out.println("Near the edge, going to the center");
-                target = worldCenter;
-                targetIsPlayer = false;
-            }
-        }
-        else {
-            if (distanceFromWorldCenter + (1.5 * bot.size) > radius) {
-                worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
-                heading = getHeadingBetween(worldCenter);
-                System.out.println("Near the edge, going to the center");
-                target = worldCenter;
-                targetIsPlayer = false;
-            }
-        }
-
-        if (!afterburnerCondition && targetIsPlayer && (getDistanceBetween(target, bot) < 2*bot.size) && ((bot.size - target.size) >= 20))
-            {
-                System.out.println("Activating afterburner");
-                actionID = PlayerActions.StartAfterburner;
-                afterburnerCondition = true;
-            }
-        else if (afterburnerCondition && ((targetIsPlayer && (getDistanceBetween(target, bot) > 2*bot.size)) || (!targetIsPlayer) || ((bot.size - target.size) < 20)))
-            {
-                System.out.println("Deactivating afterburner");
-                actionID = PlayerActions.StopAfterburner;
-                afterburnerCondition = false;
-            }
-        else if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0)
-            {
-                System.out.println("Firing Torpedoes at target");
-                actionID = PlayerActions.FireTorpedoes;
-            }
-        else if (avoidingPlayer && (bot.shieldCount > 0) && (getDistanceBetween(nearestOpponent, bot) < 3*nearestOpponent.size) && (bot.size > 50) && (nearestOpponent.torpedoSalvoCount > 0))
-            {
-                System.out.println("Activating shield");
-                actionID = PlayerActions.ActivateShield;
-            }
-
-        playerAction.action = actionID;
         playerAction.heading = heading;
+        playerAction.action = resolveNewAction();
 
         System.out.println("Player action:" + playerAction.action + ":" + playerAction.heading);
 
         this.playerAction = playerAction;
     }  
+
+    private PlayerActions resolveNewAction() {
+        if (!afterburnerCondition && targetIsPlayer && (getDistanceBetween(target, bot) < 2*bot.size) && ((bot.size - target.size) >= 20))
+            {
+                System.out.println("Activating afterburner");
+                afterburnerCondition = true;
+                return PlayerActions.StartAfterburner;
+            }
+        else if (afterburnerCondition && ((targetIsPlayer && (getDistanceBetween(target, bot) > 2*bot.size)) || (!targetIsPlayer) || ((bot.size - target.size) < 20)))
+            {
+                System.out.println("Deactivating afterburner");
+                afterburnerCondition = false;
+                return PlayerActions.StopAfterburner;
+            }
+        else if (targetIsPlayer && bot.size > 20 && bot.torpedoSalvoCount > 0)
+            {
+                System.out.println("Firing Torpedoes at target");
+                return PlayerActions.FireTorpedoes;
+            }
+        else if (avoidingPlayer && (bot.shieldCount > 0) && (getDistanceBetween(nearestOpponent, bot) < 3*nearestOpponent.size) && (bot.size > 50) && (nearestOpponent.torpedoSalvoCount > 0))
+            {
+                System.out.println("Activating shield");
+                return PlayerActions.FireTorpedoes;
+            }
+        else 
+            {
+            return PlayerActions.Forward;
+            }
+    }
 
     private int resolveNewTarget() {
         var heading = new Random().nextInt(360);
@@ -222,6 +202,31 @@ public class BotService {
                 heading = getHeadingBetween(nearestPlayer.get(0));
                 System.out.println("Targeting Opponent");
             }
+            
+            Position centerPosition = new Position();
+            var distanceFromWorldCenter = getDistanceBetween(bot,new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null));
+    
+            World world = gameState.getWorld();
+            Integer radius = world.getRadius();
+    
+            if (radius == null) {
+                if (distanceFromWorldCenter + (1.5 * bot.size) > 1000) {
+                    worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
+                    heading = getHeadingBetween(worldCenter);
+                    target = worldCenter;
+                    targetIsPlayer = false;
+                    System.out.println("Near the edge, going to the center");
+                }
+            }
+            else {
+                if (distanceFromWorldCenter + (1.5 * bot.size) > radius) {
+                    worldCenter = new GameObject(null, null, null, null, centerPosition, null, null, null, null, null, null);
+                    heading = getHeadingBetween(worldCenter);
+                    target = worldCenter;
+                    targetIsPlayer = false;
+                    System.out.println("Near the edge, going to the center");
+                }
+            }
         }
 
         return heading;
@@ -241,14 +246,16 @@ public class BotService {
         if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndSuperFood > distanceToAttacker)) {
             if (distanceToFood > distanceToSuperFood) {
                 return getHeadingBetween(closestSuperFood);
-            } else{
+            } 
+            else {
                 return getHeadingBetween(closestFood);
             }
         }
         else if ((distanceToAttacker > attacker.speed) && (distanceBetweenAttackerAndFood > distanceToAttacker)) {
             if (distanceToSuperFood > distanceToFood) {
                 return getHeadingBetween(closestFood);
-            } else{
+            } 
+            else {
                 return getHeadingBetween(closestSuperFood);
             }
         }
